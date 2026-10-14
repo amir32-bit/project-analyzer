@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Project Analyzer - ابزار تحلیل خودکار پروژه
-خلاصه‌نویسی برای AI بدون دخالت دستی
+Project Analyzer - Automatic Project Analysis Tool
+Summary generation for AI without manual intervention
 """
 
 import os
@@ -30,8 +30,8 @@ class ProjectAnalyzer:
         }
         
     def analyze(self):
-        """شروع تحلیل پروژه"""
-        print(f"🔍 تحلیل پروژه: {self.project_path}")
+        """Start project analysis"""
+        print(f"🔍 Analyzing project: {self.project_path}")
         
         self.scan_directory()
         self.extract_dependencies()
@@ -43,7 +43,7 @@ class ProjectAnalyzer:
         return self.analysis
     
     def scan_directory(self):
-        """بررسی ساختار دایرکتوری"""
+        """Scan directory structure"""
         structure = defaultdict(list)
         
         ignore_dirs = {'.git', '__pycache__', '.env', 'node_modules', 
@@ -65,7 +65,7 @@ class ProjectAnalyzer:
         self.analysis['structure'] = dict(structure)
     
     def extract_dependencies(self):
-        """استخراج وابستگی‌ها"""
+        """Extract dependencies"""
         dependencies = []
         
         req_file = self.project_path / 'requirements.txt'
@@ -94,7 +94,7 @@ class ProjectAnalyzer:
         self.analysis['dependencies'] = list(set(dependencies))
     
     def analyze_python_files(self):
-        """تحلیل فایل‌های پایتون"""
+        """Analyze Python files"""
         python_files = self.analysis['structure'].get('.py', [])
         
         for file_path in python_files:
@@ -115,10 +115,10 @@ class ProjectAnalyzer:
                     self.analysis['files_info'][file_path].append(docstring)
                     
             except Exception as e:
-                print(f"⚠️  خطا در خواندن {file_path}: {e}")
+                print(f"⚠️  Error reading {file_path}: {e}")
     
     def extract_from_ast(self, tree, file_path):
-        """استخراج اطلاعات AST"""
+        """Extract information from AST"""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 func_info = {
@@ -139,7 +139,7 @@ class ProjectAnalyzer:
                 self.analysis['classes'].append(class_info)
     
     def extract_file_docstring(self, content):
-        """استخراج docstring فایل"""
+        """Extract file docstring"""
         lines = content.split('\n')
         docstring_start = None
         
@@ -160,7 +160,7 @@ class ProjectAnalyzer:
         return None
     
     def find_config_files(self):
-        """پیدا کردن فایل‌های تنظیم"""
+        """Find configuration files"""
         config_patterns = [
             'setup.py', 'setup.cfg', 'pyproject.toml',
             'config.py', 'settings.py', '.env.example',
@@ -174,7 +174,7 @@ class ProjectAnalyzer:
                 self.analysis['config_files'].append(pattern)
     
     def find_documentation(self):
-        """پیدا کردن فایل‌های مستندات"""
+        """Find documentation files"""
         doc_patterns = [
             'README.md', 'README.rst', 'CONTRIBUTING.md',
             'CHANGELOG.md', 'LICENSE', 'docs'
@@ -186,7 +186,7 @@ class ProjectAnalyzer:
                 self.analysis['documentation'].append(pattern)
     
     def extract_readme(self):
-        """استخراج محتوای README"""
+        """Extract README content"""
         readme_files = ['README.md', 'README.rst', 'README.txt']
         
         for readme in readme_files:
@@ -198,86 +198,86 @@ class ProjectAnalyzer:
                         self.analysis['description'] = content[:500]
                     break
                 except Exception as e:
-                    print(f"⚠️  خطا در خواندن README: {e}")
+                    print(f"⚠️  Error reading README: {e}")
     
     def generate_prompt(self):
-        """تولید prompt برای AI"""
-        prompt = f"""# تحلیل پروژه: {self.analysis['project_name']}
+        """Generate prompt for AI"""
+        prompt = f"""# Project Analysis: {self.analysis['project_name']}
 
-## اطلاعات کلی
-- **نام پروژه:** {self.analysis['project_name']}
-- **مسیر:** {self.project_path}
+## General Information
+- **Project Name:** {self.analysis['project_name']}
+- **Path:** {self.project_path}
 
-## ساختار پروژه
+## Project Structure
 """
         
         if self.analysis['structure']:
             for ext, files in sorted(self.analysis['structure'].items()):
-                prompt += f"\n### فایل‌های {ext} ({len(files)} عدد)\n"
+                prompt += f"\n### Files {ext} ({len(files)} total)\n"
                 for file in sorted(files)[:10]:
                     prompt += f"- {file}\n"
                 if len(files) > 10:
-                    prompt += f"- ... و {len(files) - 10} فایل دیگر\n"
+                    prompt += f"- ... and {len(files) - 10} more files\n"
         
         if self.analysis['languages']:
-            prompt += "\n## زبان‌های استفاده شده\n"
+            prompt += "\n## Programming Languages Used\n"
             for lang, count in sorted(self.analysis['languages'].items(), 
                                      key=lambda x: x[1], reverse=True):
-                prompt += f"- {lang}: {count} فایل\n"
+                prompt += f"- {lang}: {count} files\n"
         
         if self.analysis['dependencies']:
-            prompt += "\n## وابستگی‌های اصلی\n"
+            prompt += "\n## Main Dependencies\n"
             for dep in sorted(self.analysis['dependencies'])[:20]:
                 prompt += f"- {dep}\n"
             if len(self.analysis['dependencies']) > 20:
-                prompt += f"- ... و {len(self.analysis['dependencies']) - 20} وابستگی دیگر\n"
+                prompt += f"- ... and {len(self.analysis['dependencies']) - 20} more dependencies\n"
         
         if self.analysis['classes']:
-            prompt += "\n## کلاس‌های اصلی\n"
+            prompt += "\n## Main Classes\n"
             for cls in self.analysis['classes'][:15]:
                 prompt += f"- **{cls['name']}** ({cls['file']})\n"
                 if cls['docstring']:
                     prompt += f"  {cls['docstring'][:100]}\n"
                 if cls['methods']:
-                    prompt += f"  متدها: {', '.join(cls['methods'][:5])}\n"
+                    prompt += f"  Methods: {', '.join(cls['methods'][:5])}\n"
         
         if self.analysis['functions']:
-            prompt += "\n## توابع اصلی\n"
+            prompt += "\n## Main Functions\n"
             for func in self.analysis['functions'][:20]:
-                params = ', '.join(func['args']) if func['args'] else 'بدون پارامتر'
+                params = ', '.join(func['args']) if func['args'] else 'no parameters'
                 prompt += f"- **{func['name']}** ({params}) - {func['file']}\n"
         
         if self.analysis['config_files']:
-            prompt += "\n## فایل‌های تنظیم\n"
+            prompt += "\n## Configuration Files\n"
             for config in self.analysis['config_files']:
                 prompt += f"- {config}\n"
         
         if self.analysis['documentation']:
-            prompt += "\n## مستندات\n"
+            prompt += "\n## Documentation\n"
             for doc in self.analysis['documentation']:
                 prompt += f"- {doc}\n"
         
         if self.analysis['description']:
-            prompt += "\n## توضیحات اولیه (از README)\n"
+            prompt += "\n## Initial Description (from README)\n"
             prompt += f"{self.analysis['description']}\n"
         
-        prompt += "\n---\n## درخواست\n"
-        prompt += """لطفا این پروژه را تحلیل کرده و موارد زیر را ارائه دهید:
+        prompt += "\n---\n## Request\n"
+        prompt += """Please analyze this project and provide the following:
 
-1. **خلاصه کلی:** هدف و عملکرد اصلی پروژه
-2. **معماری:** ساختار و طراحی پروژه
-3. **کارکردهای اصلی:** بخش‌های مهم و وظایف آنها
-4. **وابستگی‌ها:** نقش کتابخانه‌های اصلی
-5. **نقاط قوت:** بخش‌های خوب پروژه
-6. **بهبودهای پیشنهادی:** مناطقی که می‌توان بهتر کرد
-7. **توصیه‌های فنی:** پیشنهادات برای بهتر شدن کد
-8. **مراحل بعدی:** گام‌های توصیه شده برای توسعه
+1. **Overall Summary:** Project purpose and main functionality
+2. **Architecture:** Project structure and design
+3. **Main Features:** Important sections and their responsibilities
+4. **Dependencies:** Role of main libraries
+5. **Strengths:** Well-designed parts of the project
+6. **Suggested Improvements:** Areas that could be enhanced
+7. **Technical Recommendations:** Suggestions for better code quality
+8. **Next Steps:** Recommended actions for development
 """
         
         return prompt
     
     def save_prompt(self, output_file=None):
-        """ذخیره prompt در فایل"""
+        """Save prompt to file"""
         if output_file is None:
             output_file = self.project_path / 'project_prompt.md'
         
@@ -286,11 +286,11 @@ class ProjectAnalyzer:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(prompt)
         
-        print(f"✅ Prompt ذخیره شد: {output_file}")
+        print(f"✅ Prompt saved: {output_file}")
         return output_file
     
     def save_analysis_json(self, output_file=None):
-        """ذخیره تحلیل به‌صورت JSON"""
+        """Save analysis as JSON"""
         if output_file is None:
             output_file = self.project_path / 'project_analysis.json'
         
@@ -309,32 +309,32 @@ class ProjectAnalyzer:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(analysis_dict, f, ensure_ascii=False, indent=2)
         
-        print(f"✅ تحلیل JSON ذخیره شد: {output_file}")
+        print(f"✅ JSON analysis saved: {output_file}")
         return output_file
     
     def print_summary(self):
-        """نمایش خلاصه تحلیل"""
+        """Display analysis summary"""
         print("\n" + "="*60)
-        print(f"📊 خلاصه تحلیل پروژه: {self.analysis['project_name']}")
+        print(f"📊 Project Analysis Summary: {self.analysis['project_name']}")
         print("="*60)
         
-        print(f"\n📁 تعداد فایل‌ها: {sum(self.analysis['languages'].values())}")
-        print(f"🔤 زبان‌های استفاده شده: {len(self.analysis['languages'])}")
-        print(f"📦 وابستگی‌ها: {len(self.analysis['dependencies'])}")
-        print(f"🏗️  کلاس‌ها: {len(self.analysis['classes'])}")
-        print(f"⚙️  توابع: {len(self.analysis['functions'])}")
-        print(f"⚙️  فایل‌های تنظیم: {len(self.analysis['config_files'])}")
+        print(f"\n📁 Total Files: {sum(self.analysis['languages'].values())}")
+        print(f"🔤 Programming Languages: {len(self.analysis['languages'])}")
+        print(f"📦 Dependencies: {len(self.analysis['dependencies'])}")
+        print(f"🏗️  Classes: {len(self.analysis['classes'])}")
+        print(f"⚙️  Functions: {len(self.analysis['functions'])}")
+        print(f"⚙️  Configuration Files: {len(self.analysis['config_files'])}")
         
         print("\n" + "="*60)
 
 
 def main():
-    """نقطه ورود اصلی"""
+    """Main entry point"""
     import sys
     
     if len(sys.argv) < 2:
-        print("📖 استفاده: python file.py <مسیر_پروژه>")
-        print("\nمثال:")
+        print("📖 Usage: python file.py <project_path>")
+        print("\nExamples:")
         print("  python file.py C:\\Users\\YourName\\Desktop\\MyProject")
         print("  python file.py /home/user/projects/myproject")
         sys.exit(1)
@@ -342,7 +342,7 @@ def main():
     project_path = sys.argv[1]
     
     if not os.path.exists(project_path):
-        print(f"❌ خطا: مسیر وجود ندارد: {project_path}")
+        print(f"❌ Error: Path does not exist: {project_path}")
         sys.exit(1)
     
     analyzer = ProjectAnalyzer(project_path)
@@ -352,10 +352,10 @@ def main():
     analyzer.save_prompt()
     analyzer.save_analysis_json()
     
-    print("\n🎉 تحلیل پروژه به پایان رسید!")
-    print("📄 فایل‌های خروجی:")
-    print(f"  - project_prompt.md (برای استفاده با AI)")
-    print(f"  - project_analysis.json (داده‌های تحلیلی)")
+    print("\n🎉 Project analysis complete!")
+    print("📄 Output files:")
+    print(f"  - project_prompt.md (for use with AI)")
+    print(f"  - project_analysis.json (analysis data)")
 
 
 if __name__ == '__main__':
